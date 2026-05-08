@@ -101,14 +101,13 @@ export function AuditForm() {
     setIsSubmitting(true);
     try {
       const payload: AuditInput = { tools, teamSize, useCase };
-      const res = await fetch("/api/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Audit failed");
-      const data = await res.json();
+      // Run audit entirely in the browser for GitHub Pages compatibility
+      const { runAudit, generateFallbackSummary } = await import("@/lib/audit-engine");
+      const result = runAudit(payload);
+      const aiSummary = generateFallbackSummary(result, payload.useCase);
+      const shareId = "local-" + Date.now().toString(36);
+      
+      const data = { ...result, aiSummary, shareId };
       localStorage.setItem("audit-result", JSON.stringify(data));
       router.push(`/results?id=${data.shareId}`);
     } catch (err) {
